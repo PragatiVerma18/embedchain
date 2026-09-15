@@ -1,56 +1,52 @@
-# Variables
-PYTHON := python3
-PIP := $(PYTHON) -m pip
-PROJECT_NAME := embedchain
+.PHONY: format sort lint
 
-# Targets
-.PHONY: install format lint clean test ci_lint ci_test coverage
+# Variables
+ISORT_OPTIONS = --profile black
+PROJECT_NAME := mem0ai
+
+# Default target
+all: format sort lint
 
 install:
-	poetry install
+	hatch env create
 
-# TODO: use a more efficient way to install these packages
 install_all:
-	poetry install --all-extras
-	poetry run pip install pinecone-text pinecone-client langchain-anthropic "unstructured[local-inference, all-docs]" ollama langchain_together==0.1.3 \
-		langchain_cohere==0.1.5 deepgram-sdk==3.2.7 langchain-huggingface psutil clarifai==10.0.1 flask==2.3.3 twilio==8.5.0 fastapi-poe==0.0.16 discord==2.3.2 \
-	 	slack-sdk==3.21.3 huggingface_hub==0.23.0 gitpython==3.1.38 yt_dlp==2023.11.14 PyGithub==1.59.1 feedparser==6.0.10 newspaper3k==0.2.8 listparser==0.19 \
-	 	modal==0.56.4329 dropbox==11.36.2 boto3==1.34.20 youtube-transcript-api==0.6.1 pytube==15.0.0 beautifulsoup4==4.12.3
+	pip install ruff==0.16.0 groq together boto3 'litellm>=1.83.7,<1.98.0' ollama chromadb weaviate weaviate-client sentence_transformers vertexai \
+	            google-generativeai elasticsearch opensearch-py vecs "pinecone<7.0.0" pinecone-text faiss-cpu langchain-community \
+							upstash-vector azure-search-documents langchain-memgraph langchain-neo4j langchain-aws rank-bm25 pymochow pymongo psycopg kuzu databricks-sdk valkey
 
-install_es:
-	poetry install --extras elasticsearch
-
-install_opensearch:
-	poetry install --extras opensearch
-
-install_milvus:
-	poetry install --extras milvus
-
-shell:
-	poetry shell
-
-py_shell:
-	poetry run python
-
+# Format code with ruff
 format:
-	$(PYTHON) -m black .
-	$(PYTHON) -m isort .
+	hatch run format
 
-clean:
-	rm -rf dist build *.egg-info
+# Sort imports with isort
+sort:
+	hatch run isort mem0/
 
+# Lint code with ruff
 lint:
-	poetry run ruff .
+	hatch run lint
+
+docs:
+	cd docs && mintlify dev
 
 build:
-	poetry build
+	hatch build
 
 publish:
-	poetry publish
+	hatch publish
 
-# for example: make test file=tests/test_factory.py
+clean:
+	rm -rf dist
+
 test:
-	poetry run pytest $(file)
+	hatch run test
 
-coverage:
-	poetry run pytest --cov=$(PROJECT_NAME) --cov-report=xml
+test-py-3.10:
+	hatch run dev_py_3_10:test
+
+test-py-3.11:
+	hatch run dev_py_3_11:test
+
+test-py-3.12:
+	hatch run dev_py_3_12:test
